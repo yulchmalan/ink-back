@@ -9,7 +9,6 @@ import cors from "cors";
 dotenv.config();
 
 const app = express();
-const port = 4000;
 
 connectDB();
 
@@ -39,6 +38,8 @@ app.use(
   })
 );
 
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}/graphql`);
+const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running at http://0.0.0.0:${PORT}/graphql`);
 });
