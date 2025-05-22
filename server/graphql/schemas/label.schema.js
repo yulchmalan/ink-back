@@ -19,12 +19,30 @@ export const labelTypeDefs = `#graphql
     nameContains: String
   }
 
+  type LabelName {
+    en: String!
+    ua: String!
+    pl: String!
+  }
+
   type Label {
     id: ObjectID!
-    name: String!
+    name: LabelName!
     type: LabelType!
     createdAt: DateTime
     updatedAt: DateTime
+  }
+
+  input LabelNameInput {
+    en: String!
+    ua: String!
+    pl: String!
+  }
+
+  type Mutation {
+    createLabel(name: LabelNameInput!, type: LabelType!): Label
+    updateLabel(id: ObjectID!, name: LabelNameInput, type: LabelType): Label
+    deleteLabel(id: ObjectID!): Boolean
   }
 
   type PaginatedLabels {
@@ -45,8 +63,8 @@ export const labelTypeDefs = `#graphql
   }
 
   type Mutation {
-    createLabel(name: String!, type: LabelType!): Label
-    updateLabel(id: ObjectID!, name: String, type: LabelType): Label
+    createLabel(name: LabelNameInput!, type: LabelType!): Label
+    updateLabel(id: ObjectID!, name: LabelNameInput, type: LabelType): Label
     deleteLabel(id: ObjectID!): Boolean
   }
 `;

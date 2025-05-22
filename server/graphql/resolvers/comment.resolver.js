@@ -1,5 +1,7 @@
 import Comment from "../../models/comment.model.js";
 import User from "../../models/user.model.js";
+import Title from "../../models/title.model.js";
+import { isValidObjectId, Types } from "mongoose";
 
 export const commentResolvers = {
   Query: {
@@ -16,12 +18,45 @@ export const commentResolvers = {
       try {
         const query = {};
 
-        if (filter.subjectId) {
-          query.subject_ID = filter.subjectId;
+        if (filter.userId && isValidObjectId(filter.userId)) {
+          query.user_ID = Types.ObjectId.createFromHexString(filter.userId);
         }
 
-        if (filter.userId) {
-          query.user_ID = filter.userId;
+        if (filter.subjectId && isValidObjectId(filter.subjectId)) {
+          query.subject_ID = Types.ObjectId.createFromHexString(
+            filter.subjectId
+          );
+        }
+
+        const sortDirection = sortOrder === "ASC" ? 1 : -1;
+
+        if (sortBy === "RATING") {
+          const total = await Comment.countDocuments(query);
+
+          const results = await Comment.aggregate([
+            { $match: query },
+            {
+              $addFields: {
+                rating: { $subtract: ["$score.likes", "$score.dislikes"] },
+              },
+            },
+            { $sort: { rating: sortDirection } },
+            { $skip: offset },
+            { $limit: limit },
+            {
+              $project: {
+                id: "$_id", // ← ОБОВ'ЯЗКОВО
+                _id: 1,
+                body: 1,
+                createdAt: 1,
+                score: 1,
+                subject_ID: 1,
+                user_ID: 1,
+              },
+            },
+          ]);
+
+          return { total, results };
         }
 
         const sortFieldMap = {
@@ -31,7 +66,6 @@ export const commentResolvers = {
         };
 
         const sortField = sortFieldMap[sortBy] || "createdAt";
-        const sortDirection = sortOrder === "ASC" ? 1 : -1;
 
         const total = await Comment.countDocuments(query);
         const results = await Comment.find(query)
@@ -41,7 +75,7 @@ export const commentResolvers = {
 
         return { total, results };
       } catch (error) {
-        console.error("error fetching comments:", error.message);
+        console.error("error fetching comments:", error);
         throw new Error("Failed to fetch comments");
       }
     },
@@ -135,6 +169,9 @@ export const commentResolvers = {
     },
     async parent(parent) {
       return parent.parent_ID ? await Comment.findById(parent.parent_ID) : null;
+    },
+    async title(parent) {
+      return await Title.findById(parent.subject_ID);
     },
   },
 };

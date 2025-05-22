@@ -1,10 +1,18 @@
-// models/Label.js
 import mongoose from "mongoose";
+
+const labelNameSchema = new mongoose.Schema(
+  {
+    en: { type: String, required: true },
+    ua: { type: String, required: true },
+    pl: { type: String, required: true },
+  },
+  { _id: false }
+);
 
 const labelSchema = new mongoose.Schema(
   {
     name: {
-      type: String,
+      type: labelNameSchema,
       required: true,
       unique: true,
       trim: true,
@@ -19,6 +27,4 @@ const labelSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Label = mongoose.model("Label", labelSchema);
-
-export default Label;
+export default mongoose.model("Label", labelSchema);

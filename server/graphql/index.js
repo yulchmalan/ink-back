@@ -12,10 +12,12 @@ import { reportTypeTypeDefs } from "./schemas/report-type.schema.js";
 import { labelTypeDefs } from "./schemas/label.schema.js";
 import { commentTypeDefs } from "./schemas/comment.schema.js";
 import { userTypeDefs } from "./schemas/user.schema.js";
+import { collectionTypeDefs } from "./schemas/collection.schema.js";
 import { userResolvers } from "./resolvers/user.resolver.js";
 import { authorResolvers } from "./resolvers/author.resolver.js";
 import { labelResolvers } from "./resolvers/label.resolver.js";
 import { titleResolvers } from "./resolvers/title.resolver.js";
+import { collectionResolvers } from "./resolvers/collection.resolver.js";
 import { reportTypeResolvers } from "./resolvers/report-type.resolver.js";
 import { reportResolvers } from "./resolvers/report.resolver.js";
 import { commentResolvers } from "./resolvers/comment.resolver.js";
@@ -37,6 +39,7 @@ const typeDefs = mergeTypeDefs([
   userTypeDefs,
   authTypeDefs,
   uploadTypeDefs,
+  collectionTypeDefs,
 ]);
 
 const resolvers = mergeResolvers([
@@ -51,6 +54,7 @@ const resolvers = mergeResolvers([
   reviewResolvers,
   authResolvers,
   uploadResolver,
+  collectionResolvers,
 ]);
 
 export { typeDefs, resolvers };

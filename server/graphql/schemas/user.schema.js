@@ -11,14 +11,16 @@ export const userTypeDefs = `#graphql
   enum FriendStatus {
     PENDING
     ACCEPTED
-    REJECTED
+    RECEIVED
   }
 
   type SavedTitle {
     title: Title
     rating: Int
     last_open: DateTime
+    added: DateTime
     progress: Int
+    language: String
   }
 
   type List {
@@ -31,10 +33,9 @@ export const userTypeDefs = `#graphql
     status: FriendStatus
   }
 
-  type Settings {
-    bio: String
-    pfp: String
-    banner: String
+  type UserStats {
+    materialsAdded: Int!
+    titlesCreated: Int!
   }
 
   type User {
@@ -42,43 +43,70 @@ export const userTypeDefs = `#graphql
     username: String
     email: EmailAddress
     password_hash: Password
-    settings: Settings
-    created: DateTime
+    bio: String
+    stats: UserStats
+    createdAt: DateTime
+    updatedAt: DateTime
     last_online: DateTime
     lists: [List]
     friends: [Friend!]
     reviews: [Review!]
     comments: [Comment!]
     recommendations: [Title!]
+    exp: Int
     role: Role
-  }
-
-  input AddSettingsInput {
-    bio: String
-    pfp: String
-    banner: String
   }
 
   input AddUserInput {
     username: String!
     email: EmailAddress!
     password_hash: Password!
-    settings: AddSettingsInput
-  }
-
-  input EditSettingsInput {
     bio: String
-    pfp: String
-    banner: String
   }
 
   input EditUserInput {
     username: String
     email: EmailAddress
     password_hash: Password
-    settings: EditSettingsInput
+    bio: String
     last_online: DateTime
     role: Role
+    updatedAt: DateTime
+  }
+
+  input EditListInput {
+    name: String!
+    titles: [EditSavedTitleInput!]
+  }
+
+  input EditSavedTitleInput {
+    title: ObjectID!
+    rating: Int
+    last_open: DateTime
+    added: DateTime
+    progress: Int
+    language: String
+  }
+
+  input NewListInput {
+    name: String!
+  }
+
+  input AddTitleToListInput {
+    listName: String!
+    titleId: ObjectID!
+    language: String 
+  }
+
+  type LabelName {
+    en: String
+    ua: String
+    pl: String
+  }
+
+  type GenreStat {
+    name: LabelName
+    count: Int
   }
 
   type Query {
@@ -91,11 +119,21 @@ export const userTypeDefs = `#graphql
       search: String
     ): [User]
     user(id: ObjectID!): User
+    userGenreStats(userId: ObjectID!): [GenreStat!]!
   }
 
   type Mutation {
     addUser(user: AddUserInput!): User
     updateUser(id: ObjectID!, edits: EditUserInput!): User
     deleteUser(id: ObjectID!): Boolean
+
+    addCustomList(userId: ObjectID!, input: NewListInput!): [List]
+    addTitleToList(userId: ObjectID!, input: AddTitleToListInput!): [List]
+
+    addExpToUser(userId: ObjectID!, amount: Int!): User
+
+    addFriend(userId: ObjectID!, friendId: ObjectID!, status: FriendStatus!): User
+    updateFriendStatus(userId: ObjectID!, friendId: ObjectID!, newStatus: FriendStatus!): User
+    removeFriend(userId: ObjectID!, friendId: ObjectID!): User
   }
 `;

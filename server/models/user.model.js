@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 
 // константи для ролей та статусів
 const ROLES = ["USER", "MODERATOR", "ADMIN", "OWNER"];
-const FRIEND_STATUSES = ["PENDING", "ACCEPTED", "REJECTED"];
+const FRIEND_STATUSES = ["PENDING", "ACCEPTED", "RECEIVED"];
 
 // збережені твори в списках
 const savedTitleSchema = new mongoose.Schema(
@@ -20,25 +20,29 @@ const savedTitleSchema = new mongoose.Schema(
     last_open: {
       type: Date,
     },
+    added: {
+      type: Date,
+    },
     progress: {
       type: Number,
       min: 0,
+    },
+    language: {
+      type: String,
+      default: "uk",
     },
   },
   { _id: false }
 );
 
 //  читацькі списки
-const listSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-    },
-    titles: [savedTitleSchema],
+const listSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
   },
-  { _id: false }
-);
+  titles: [savedTitleSchema],
+});
 
 // друзі та статус дружби
 const friendSchema = new mongoose.Schema(
@@ -50,22 +54,6 @@ const friendSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: FRIEND_STATUSES,
-    },
-  },
-  { _id: false }
-);
-
-// додаткові налаштування профілю
-const settingsSchema = new mongoose.Schema(
-  {
-    bio: {
-      type: String,
-    },
-    pfp: {
-      type: String,
-    },
-    banner: {
-      type: String,
     },
   },
   { _id: false }
@@ -87,15 +75,30 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    settings: settingsSchema,
-    created: {
-      type: Date,
-      default: Date.now,
+    bio: { type: String, default: "" },
+    stats: {
+      materialsAdded: {
+        type: Number,
+        default: 0,
+      },
+      titlesCreated: {
+        type: Number,
+        default: 0,
+      },
     },
+    recommendations: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Title",
+      },
+    ],
     last_online: {
       type: Date,
     },
-    lists: [listSchema],
+    lists: {
+      type: [listSchema],
+      default: [],
+    },
     friends: [friendSchema],
     reviews: [
       {
@@ -109,6 +112,11 @@ const userSchema = new mongoose.Schema(
         ref: "Comment",
       },
     ],
+    exp: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     role: {
       type: String,
       enum: ROLES,
@@ -118,7 +126,6 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// створення моделі
 const User = mongoose.model("User", userSchema);
 
 export default User;

@@ -8,6 +8,7 @@ export const commentTypeDefs = `#graphql
     id: ObjectID!
     user: User!
     subject_ID: ObjectID!
+    title: Title
     body: String!
     parent: Comment
     score: Score
@@ -30,6 +31,7 @@ export const commentTypeDefs = `#graphql
     CREATED_AT
     LIKES
     DISLIKES
+    RATING
   }
 
   enum SortOrder {

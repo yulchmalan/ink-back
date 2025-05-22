@@ -1,115 +1,119 @@
 export const titleTypeDefs = `#graphql
-scalar ObjectID
+  scalar ObjectID
 
-enum Translation {
-  TRANSLATED
-  IN_PROGRESS
-  NOT_TRANSLATED
-}
+  enum Translation {
+    TRANSLATED
+    IN_PROGRESS
+    NOT_TRANSLATED
+  }
 
-enum Status {
-  COMPLETED
-  ONGOING
-  ANNOUNCED
-}
+  enum Status {
+    COMPLETED
+    ONGOING
+    ANNOUNCED
+  }
 
-enum TitleSortField {
-  NAME
-  CREATED_AT
-}
+  enum TitleType {
+    COMIC
+    NOVEL
+  }
 
-enum SortDirection {
-  ASC
-  DESC
-}
+  enum TitleSortField {
+    NAME
+    CREATED_AT
+  }
 
-type Content {
-  volume: Int
-  chapter: Int
-  path: String
-}
+  enum SortDirection {
+    ASC
+    DESC
+  }
 
-type Title {
-  id: ObjectID!
-  name: String!
-  description: String
-  author: Author             
-  cover: String
-  franchise: String
-  translation: Translation
-  status: Status
-  alt_names: [String]
-  content: Content
-  genres: [Label]
-  tags: [Label]
-  createdAt: DateTime
-  updatedAt: DateTime
-}
+  type AltName {
+    lang: String!
+    value: String!
+  }
 
-input CreateTitleInput {
-  name: String!
-  description: String
-  authorId: ObjectID!
-  cover: String
-  franchise: String
-  translation: Translation
-  status: Status
-  alt_names: [String]
-  content: ContentInput
-  genreIds: [ObjectID]
-  tagIds: [ObjectID]
-}
+  input AltNameInput {
+    lang: String!
+    value: String!
+  }
 
-input UpdateTitleInput {
-  name: String
-  description: String
-  authorId: ObjectID
-  cover: String
-  franchise: String
-  translation: Translation
-  status: Status
-  alt_names: [String]
-  content: ContentInput
-  genreIds: [ObjectID]
-  tagIds: [ObjectID]
-}
+  type Title {
+    id: ObjectID!
+    name: String!
+    description: String
+    author: Author             
+    cover: String
+    franchise: String
+    translation: Translation
+    status: Status
+    alt_names: [AltName]            
+    genres: [Label]
+    tags: [Label]
+    createdAt: DateTime
+    updatedAt: DateTime
+    type: TitleType
+  }
 
-input ContentInput {
-  volume: Int
-  chapter: Int
-  path: String
-}
+  input CreateTitleInput {
+    name: String!
+    description: String
+    authorId: ObjectID!
+    cover: String
+    franchise: String
+    translation: Translation
+    status: Status
+    alt_names: [AltNameInput]       
+    genreIds: [ObjectID]
+    tagIds: [ObjectID]
+    type: TitleType!
+  }
 
-input TitleFilterInput {
-  name: String
-  franchise: String
-  translation: Translation
-  status: Status
-}
+  input UpdateTitleInput {
+    name: String
+    description: String
+    authorId: ObjectID
+    cover: String
+    franchise: String
+    translation: Translation
+    status: Status
+    alt_names: [AltNameInput]      
+    genreIds: [ObjectID]
+    tagIds: [ObjectID]
+    type: TitleType
+  }
 
-input TitleSortInput {
-  field: TitleSortField!
-  direction: SortDirection!
-}
+  input TitleFilterInput {
+    name: String
+    franchise: String
+    translation: Translation
+    status: Status
+  }
 
-type TitleQueryResult {
-  total: Int!
-  results: [Title!]!
-}
+  input TitleSortInput {
+    field: TitleSortField!
+    direction: SortDirection!
+  }
 
-type Query {
-  titles(
-    filter: TitleFilterInput
-    sort: TitleSortInput
-    limit: Int
-    offset: Int
-  ): TitleQueryResult!
-  
-  getTitle(id: ObjectID!): Title
-}
+  type TitleQueryResult {
+    total: Int!
+    results: [Title!]!
+  }
 
-type Mutation {
-  createTitle(input: CreateTitleInput!): Title
-  updateTitle(id: ObjectID!, input: UpdateTitleInput!): Title
-  deleteTitle(id: ObjectID!): Boolean
-}`;
+  type Query {
+    titles(
+      filter: TitleFilterInput
+      sort: TitleSortInput
+      limit: Int
+      offset: Int
+    ): TitleQueryResult!
+    
+    getTitle(id: ObjectID!): Title
+  }
+
+  type Mutation {
+    createTitle(input: CreateTitleInput!): Title
+    updateTitle(id: ObjectID!, input: UpdateTitleInput!): Title
+    deleteTitle(id: ObjectID!): Boolean
+  }
+`;

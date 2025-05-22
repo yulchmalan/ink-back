@@ -51,9 +51,9 @@ export const labelResolvers = {
   Mutation: {
     async createLabel(_, { name, type }) {
       try {
-        const existing = await Label.findOne({ name, type });
+        const existing = await Label.findOne({ "name.en": name.en, type });
         if (existing)
-          throw new Error("Label with same name and type already exists");
+          throw new Error("Label with same name (EN) and type exists");
         return await Label.create({ name, type });
       } catch (error) {
         console.error("error creating label:", error);
@@ -63,14 +63,13 @@ export const labelResolvers = {
 
     async updateLabel(_, { id, name, type }) {
       try {
-        const updated = await Label.findByIdAndUpdate(
-          id,
-          {
-            ...(name !== undefined && { name }),
-            ...(type !== undefined && { type }),
-          },
-          { new: true }
-        );
+        const updates = {};
+        if (name) updates.name = name;
+        if (type !== undefined) updates.type = type;
+
+        const updated = await Label.findByIdAndUpdate(id, updates, {
+          new: true,
+        });
         if (!updated) throw new Error("Label not found");
         return updated;
       } catch (error) {
