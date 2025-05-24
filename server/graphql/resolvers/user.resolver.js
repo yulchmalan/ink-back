@@ -182,6 +182,19 @@ export const userResolvers = {
       return user.lists;
     },
 
+    removeTitleFromLists: async (_, { userId, titleId }) => {
+      const user = await User.findById(userId);
+      if (!user) throw new Error("User not found");
+
+      user.lists.forEach((list) => {
+        list.titles = list.titles.filter((t) => t.title.toString() !== titleId);
+      });
+
+      user.markModified("lists");
+      await user.save();
+      return user.lists;
+    },
+
     updateTitleRating: async (
       _,
       { userId, titleId, rating, language = "uk" }
