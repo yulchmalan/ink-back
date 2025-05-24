@@ -144,13 +144,22 @@ export const userResolvers = {
 
       const { listName, titleId, language = "uk" } = input;
 
+      // 1. Знайдемо існуючий запис (якщо є)
+      let savedEntry = null;
+
       user.lists.forEach((list) => {
-        list.titles = list.titles.filter(
+        const index = list.titles.findIndex(
           (entry) =>
-            entry.title.toString() !== titleId || entry.language !== language
+            entry.title.toString() === titleId && entry.language === language
         );
+
+        if (index !== -1) {
+          savedEntry = list.titles[index];
+          list.titles.splice(index, 1); // видаляємо
+        }
       });
 
+      // 2. Знаходимо список, куди додавати
       const targetList = user.lists.find((l) => l.name === listName);
       if (!targetList) throw new Error("List not found");
 
@@ -162,10 +171,10 @@ export const userResolvers = {
       if (!alreadyExists) {
         targetList.titles.push({
           title: titleId,
-          rating: 0,
-          progress: 0,
+          rating: savedEntry?.rating ?? 0,
+          progress: savedEntry?.progress ?? 0,
+          added: savedEntry?.added ?? new Date(),
           language,
-          added: new Date(),
         });
       }
 

@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const labelNameSchema = new mongoose.Schema(
   {
     en: { type: String, required: true },
-    ua: { type: String, required: true },
+    uk: { type: String, required: true },
     pl: { type: String, required: true },
   },
   { _id: false }

@@ -45,7 +45,7 @@ export const commentResolvers = {
             { $limit: limit },
             {
               $project: {
-                id: "$_id", // ← ОБОВ'ЯЗКОВО
+                id: "$_id",
                 _id: 1,
                 body: 1,
                 createdAt: 1,
@@ -136,30 +136,79 @@ export const commentResolvers = {
       }
     },
 
-    async likeComment(_, { id }) {
-      try {
-        return await Comment.findByIdAndUpdate(
-          id,
-          { $inc: { "score.likes": 1 } },
-          { new: true }
-        );
-      } catch (error) {
-        console.error("error liking comment:", error.message);
-        throw new Error("Failed to like comment");
+    async likeComment(_, { id, userId }) {
+      userId = new Types.ObjectId(userId);
+      const comment = await Comment.findById(id);
+      if (!comment) throw new Error("Comment not found");
+
+      const liked = comment.score.likedBy.some((uid) => uid.equals(userId));
+      const disliked = comment.score.dislikedBy.some((uid) =>
+        uid.equals(userId)
+      );
+
+      if (liked) {
+        comment.score.likes--;
+        comment.score.likedBy.pull(userId);
+      } else {
+        comment.score.likes++;
+        comment.score.likedBy.push(userId);
+        if (disliked) {
+          comment.score.dislikes--;
+          comment.score.dislikedBy.pull(userId);
+        }
       }
+
+      await comment.save();
+      return comment;
     },
 
-    async dislikeComment(_, { id }) {
-      try {
-        return await Comment.findByIdAndUpdate(
-          id,
-          { $inc: { "score.dislikes": 1 } },
-          { new: true }
-        );
-      } catch (error) {
-        console.error("error disliking comment:", error.message);
-        throw new Error("Failed to dislike comment");
+    async dislikeComment(_, { id, userId }) {
+      userId = new Types.ObjectId(userId);
+      const comment = await Comment.findById(id);
+      if (!comment) throw new Error("Comment not found");
+
+      const liked = comment.score.likedBy.some((uid) => uid.equals(userId));
+      const disliked = comment.score.dislikedBy.some((uid) =>
+        uid.equals(userId)
+      );
+
+      if (disliked) {
+        comment.score.dislikes--;
+        comment.score.dislikedBy.pull(userId);
+      } else {
+        comment.score.dislikes++;
+        comment.score.dislikedBy.push(userId);
+        if (liked) {
+          comment.score.likes--;
+          comment.score.likedBy.pull(userId);
+        }
       }
+
+      await comment.save();
+      return comment;
+    },
+
+    async clearCommentVote(_, { id, userId }) {
+      userId = new Types.ObjectId(userId);
+      const comment = await Comment.findById(id);
+      if (!comment) throw new Error("Comment not found");
+
+      const liked = comment.score.likedBy.some((uid) => uid.equals(userId));
+      const disliked = comment.score.dislikedBy.some((uid) =>
+        uid.equals(userId)
+      );
+
+      if (liked) {
+        comment.score.likes--;
+        comment.score.likedBy.pull(userId);
+      }
+      if (disliked) {
+        comment.score.dislikes--;
+        comment.score.dislikedBy.pull(userId);
+      }
+
+      await comment.save();
+      return comment;
     },
   },
 

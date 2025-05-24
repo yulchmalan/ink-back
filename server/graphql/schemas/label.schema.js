@@ -21,7 +21,7 @@ export const labelTypeDefs = `#graphql
 
   type LabelName {
     en: String!
-    ua: String!
+    uk: String!
     pl: String!
   }
 
@@ -35,7 +35,7 @@ export const labelTypeDefs = `#graphql
 
   input LabelNameInput {
     en: String!
-    ua: String!
+    uk: String!
     pl: String!
   }
 

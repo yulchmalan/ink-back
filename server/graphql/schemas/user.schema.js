@@ -100,7 +100,7 @@ export const userTypeDefs = `#graphql
 
   type LabelName {
     en: String
-    ua: String
+    uk: String
     pl: String
   }
 

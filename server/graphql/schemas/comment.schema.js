@@ -2,6 +2,8 @@ export const commentTypeDefs = `#graphql
   type Score {
     likes: Int
     dislikes: Int
+    likedBy: [User!]!
+    dislikedBy: [User!]!
   }
 
   type Comment {
@@ -65,7 +67,8 @@ export const commentTypeDefs = `#graphql
     createComment(input: CreateCommentInput!): Comment
     deleteComment(id: ObjectID!): Boolean
     editComment(id: ObjectID!, edits: EditCommentInput!): Comment
-    likeComment(id: ObjectID!): Comment
-    dislikeComment(id: ObjectID!): Comment
+    likeComment(id: ObjectID!, userId: ObjectID!): Comment
+    dislikeComment(id: ObjectID!, userId: ObjectID!): Comment
+    clearCommentVote(id: ObjectID!, userId: ObjectID!): Comment
   }
 `;
