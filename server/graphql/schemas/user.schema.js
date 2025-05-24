@@ -129,6 +129,7 @@ export const userTypeDefs = `#graphql
 
     addCustomList(userId: ObjectID!, input: NewListInput!): [List]
     addTitleToList(userId: ObjectID!, input: AddTitleToListInput!): [List]
+    updateTitleRating(userId: ObjectID!, titleId: ObjectID!, rating: Int!, language: String = "uk"): Boolean
 
     addExpToUser(userId: ObjectID!, amount: Int!): User
 

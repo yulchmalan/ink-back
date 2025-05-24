@@ -144,7 +144,6 @@ export const userResolvers = {
 
       const { listName, titleId, language = "uk" } = input;
 
-      // 1. Знайдемо існуючий запис (якщо є)
       let savedEntry = null;
 
       user.lists.forEach((list) => {
@@ -155,11 +154,10 @@ export const userResolvers = {
 
         if (index !== -1) {
           savedEntry = list.titles[index];
-          list.titles.splice(index, 1); // видаляємо
+          list.titles.splice(index, 1);
         }
       });
 
-      // 2. Знаходимо список, куди додавати
       const targetList = user.lists.find((l) => l.name === listName);
       if (!targetList) throw new Error("List not found");
 
@@ -182,6 +180,37 @@ export const userResolvers = {
       await user.save();
 
       return user.lists;
+    },
+
+    updateTitleRating: async (
+      _,
+      { userId, titleId, rating, language = "uk" }
+    ) => {
+      const user = await User.findById(userId);
+      if (!user) throw new Error("User not found");
+
+      let found = false;
+
+      for (const list of user.lists) {
+        for (const entry of list.titles) {
+          if (
+            entry.title.toString() === titleId &&
+            entry.language === language
+          ) {
+            entry.rating = rating;
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
+
+      if (!found) throw new Error("Title not found in user lists");
+
+      user.markModified("lists");
+      await user.save();
+
+      return true;
     },
 
     addExpToUser: async (_, { userId, amount }) => {
