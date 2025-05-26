@@ -38,9 +38,12 @@ export const labelResolvers = {
       }
     },
 
-    async labelsByType(_, { type }) {
+    async labelsByType(_, { type }, __, info) {
       try {
-        return await Label.find({ type });
+        const locale = info?.variableValues?.locale ?? "uk";
+
+        const sortField = `name.${locale}`;
+        return await Label.find({ type }).sort({ [sortField]: 1 });
       } catch (error) {
         console.error("error filtering labels:", error);
         throw new Error("Failed to fetch labels by type");

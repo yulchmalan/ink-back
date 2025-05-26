@@ -53,6 +53,7 @@ export const titleTypeDefs = `#graphql
     createdAt: DateTime
     updatedAt: DateTime
     type: TitleType
+    chapterCount: Int
   }
 
   input CreateTitleInput {
@@ -88,6 +89,16 @@ export const titleTypeDefs = `#graphql
     franchise: String
     translation: Translation
     status: Status
+    genreIds: [ObjectID]
+    tagIds: [ObjectID]
+    type: TitleType
+    rating: RatingRange
+    list: [String]
+  }
+
+  input RatingRange {
+    gte: Float
+    lte: Float
   }
 
   input TitleSortInput {
@@ -101,12 +112,7 @@ export const titleTypeDefs = `#graphql
   }
 
   type Query {
-    titles(
-      filter: TitleFilterInput
-      sort: TitleSortInput
-      limit: Int
-      offset: Int
-    ): TitleQueryResult!
+    titles(filter: TitleFilterInput, sort: TitleSortInput, limit: Int, offset: Int, userId: ObjectID, list: String): TitleQueryResult!
     
     getTitle(id: ObjectID!): Title
   }

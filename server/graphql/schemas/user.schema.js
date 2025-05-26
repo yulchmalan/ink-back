@@ -72,6 +72,7 @@ export const userTypeDefs = `#graphql
     last_online: DateTime
     role: Role
     updatedAt: DateTime
+    lists: [EditListInput!]
   }
 
   input EditListInput {

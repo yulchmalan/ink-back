@@ -1,44 +1,126 @@
 import Title from "../../models/title.model.js";
 import Author from "../../models/author.model.js";
 import Label from "../../models/label.model.js";
+import TitleRating from "../../models/titleRating.model.js";
+import { getChapterCount } from "../../lib/s3.js";
+import mongoose from "mongoose";
 
 export const titleResolvers = {
   Query: {
-    async titles(_, { filter, sort, limit = 10, offset = 0 }) {
+    async titles(_, { filter, sort, limit = 10, offset = 0, userId }) {
       try {
-        const query = {};
+        const match = {};
 
         if (filter?.name) {
-          query.$or = [
+          match.$or = [
             { name: { $regex: filter.name, $options: "i" } },
             { "alt_names.value": { $regex: filter.name, $options: "i" } },
           ];
         }
-        if (filter?.franchise) {
-          query.franchise = { $regex: filter.franchise, $options: "i" };
-        }
-        if (filter?.translation) {
-          query.translation = filter.translation;
-        }
-        if (filter?.status) {
-          query.status = filter.status;
-        }
 
-        const sortOptions = {};
-        if (sort) {
-          const fieldMap = {
-            NAME: "name",
-            CREATED_AT: "createdAt",
+        if (filter?.franchise)
+          match.franchise = { $regex: filter.franchise, $options: "i" };
+        if (filter?.translation) match.translation = filter.translation;
+        if (filter?.status) match.status = filter.status;
+        if (filter?.genreIds?.length)
+          match.genres = {
+            $all: filter.genreIds.map((id) => new mongoose.Types.ObjectId(id)),
           };
-          const direction = sort.direction === "DESC" ? -1 : 1;
-          sortOptions[fieldMap[sort.field]] = direction;
+        if (filter?.tagIds?.length)
+          match.tags = {
+            $all: filter.tagIds.map((id) => new mongoose.Types.ObjectId(id)),
+          };
+        if (filter?.type) match.type = filter.type;
+
+        const pipeline = [
+          { $match: match },
+
+          {
+            $lookup: {
+              from: "titleratings",
+              localField: "_id",
+              foreignField: "titleId",
+              as: "rating",
+            },
+          },
+          {
+            $addFields: {
+              rating: { $first: "$rating" },
+              id: "$_id",
+            },
+          },
+        ];
+
+        // ⬇️ JOIN з users.lists.titles
+        if (userId && filter?.list?.length) {
+          pipeline.push(
+            {
+              $lookup: {
+                from: "users",
+                let: { titleId: "$_id" },
+                pipeline: [
+                  { $match: { _id: new mongoose.Types.ObjectId(userId) } },
+                  { $unwind: "$lists" },
+                  {
+                    $match: {
+                      $expr: {
+                        $in: ["$lists.name", filter.list],
+                      },
+                    },
+                  },
+                  { $unwind: "$lists.titles" },
+                  {
+                    $match: {
+                      $expr: { $eq: ["$lists.titles.title", "$$titleId"] },
+                    },
+                  },
+                  { $project: { _id: 1 } },
+                ],
+                as: "inList",
+              },
+            },
+            { $match: { inList: { $ne: [] } } }
+          );
         }
 
-        const total = await Title.countDocuments(query);
-        const results = await Title.find(query)
-          .sort(sortOptions)
-          .skip(offset)
-          .limit(limit);
+        if (filter?.rating) {
+          const ratingMatch = {};
+          if (filter.rating.gte !== undefined)
+            ratingMatch["rating.avgRating"] = { $gte: filter.rating.gte };
+          if (filter.rating.lte !== undefined) {
+            ratingMatch["rating.avgRating"] = {
+              ...(ratingMatch["rating.avgRating"] || {}),
+              $lte: filter.rating.lte,
+            };
+          }
+          pipeline.push({ $match: ratingMatch });
+        }
+
+        const sortFieldMap = {
+          NAME: "name",
+          CREATED_AT: "createdAt",
+          RATING: "rating.avgRating",
+        };
+
+        if (sort && sortFieldMap[sort.field]) {
+          pipeline.push({
+            $sort: {
+              [sortFieldMap[sort.field]]: sort.direction === "DESC" ? -1 : 1,
+            },
+          });
+        }
+
+        pipeline.push({ $skip: offset });
+        pipeline.push({ $limit: limit });
+
+        const results = await Title.aggregate(pipeline);
+
+        const countPipeline = pipeline.filter(
+          (stage) => !("$skip" in stage || "$limit" in stage)
+        );
+        countPipeline.push({ $count: "total" });
+        const countResult = await Title.aggregate(countPipeline);
+        const total = countResult[0]?.total || 0;
 
         return { total, results };
       } catch (error) {
@@ -49,9 +131,18 @@ export const titleResolvers = {
 
     async getTitle(_, { id }) {
       try {
-        return await Title.findById(id);
+        const title = await Title.findById(id);
+        if (!title) throw new Error("Title not found");
+
+        const chapterCount = await getChapterCount(title._id.toString());
+
+        return {
+          ...title.toObject(),
+          id: title._id,
+          chapterCount,
+        };
       } catch (error) {
-        console.error("error fetching title:", error.message);
+        console.error("error fetching title:", error.message, error.stack);
         throw new Error("Failed to fetch title");
       }
     },

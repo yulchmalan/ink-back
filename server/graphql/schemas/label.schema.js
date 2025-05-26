@@ -59,7 +59,7 @@ export const labelTypeDefs = `#graphql
       offset: Int = 0
     ): PaginatedLabels!
 
-    labelsByType(type: LabelType!): [Label]
+    labelsByType(type: LabelType!, locale: String = "uk"): [Label]
   }
 
   type Mutation {
