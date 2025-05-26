@@ -7,7 +7,6 @@ export const authorTypeDefs = `#graphql
     alt_names: [String]
     bio: String
     subscribers: [User]
-    photo: String
     createdAt: DateTime
     updatedAt: DateTime
   }
@@ -53,7 +52,6 @@ export const authorTypeDefs = `#graphql
       name: String!
       alt_names: [String]
       bio: String
-      photo: String
     ): Author
 
     updateAuthor(
@@ -61,7 +59,6 @@ export const authorTypeDefs = `#graphql
       name: String
       alt_names: [String]
       bio: String
-      photo: String
     ): Author
 
     deleteAuthor(id: ObjectID!): Boolean

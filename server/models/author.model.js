@@ -13,9 +13,6 @@ const authorSchema = new mongoose.Schema(
       type: String,
       maxlength: 5000,
     },
-    photo: {
-      type: String,
-    },
     alt_names: {
       type: [String],
       default: [],

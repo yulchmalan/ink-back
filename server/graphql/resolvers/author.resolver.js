@@ -53,9 +53,9 @@ export const authorResolvers = {
   },
 
   Mutation: {
-    async createAuthor(_, { name, alt_names, bio, photo }) {
+    async createAuthor(_, { name, alt_names, bio }) {
       try {
-        const newAuthor = await Author.create({ name, alt_names, bio, photo });
+        const newAuthor = await Author.create({ name, alt_names, bio });
         return newAuthor;
       } catch (error) {
         console.error("error creating author:", error);
@@ -63,7 +63,7 @@ export const authorResolvers = {
       }
     },
 
-    async updateAuthor(_, { id, name, alt_names, bio, photo }) {
+    async updateAuthor(_, { id, name, alt_names, bio }) {
       try {
         const updatedAuthor = await Author.findByIdAndUpdate(
           id,
@@ -71,7 +71,6 @@ export const authorResolvers = {
             ...(name !== undefined && { name }),
             ...(alt_names !== undefined && { alt_names }),
             ...(bio !== undefined && { bio }),
-            ...(photo !== undefined && { photo }),
           },
           { new: true }
         );

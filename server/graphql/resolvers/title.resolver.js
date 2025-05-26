@@ -238,5 +238,10 @@ export const titleResolvers = {
     tags: async (parent) => {
       return await Label.find({ _id: { $in: parent.tags } });
     },
+    chapterCount: async (parent) => {
+      if (typeof parent.chapterCount === "number") return parent.chapterCount;
+
+      return await getChapterCount(parent._id.toString());
+    },
   },
 };

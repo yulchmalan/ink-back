@@ -110,10 +110,9 @@ export const userResolvers = {
 
         if (edits.lists?.length) {
           for (const listEdit of edits.lists) {
-            const list = user.lists.find((l) => l.name === listEdit.name);
-            if (!list) continue;
+            const editedTitles = listEdit.titles || [];
 
-            for (const editedTitle of listEdit.titles || []) {
+            for (const editedTitle of editedTitles) {
               for (const list of user.lists) {
                 const entry = list.titles.find(
                   (t) => t.title.toString() === editedTitle.title.toString()
@@ -129,22 +128,6 @@ export const userResolvers = {
                 if (editedTitle.language !== undefined)
                   entry.language = editedTitle.language;
               }
-            }
-
-            for (const editedTitle of listEdit.titles || []) {
-              const entry = list.titles.find(
-                (t) => t.title.toString() === editedTitle.title.toString()
-              );
-              if (!entry) continue;
-
-              if (editedTitle.progress !== undefined)
-                entry.progress = editedTitle.progress;
-              if (editedTitle.rating !== undefined)
-                entry.rating = editedTitle.rating;
-              if (editedTitle.last_open !== undefined)
-                entry.last_open = editedTitle.last_open;
-              if (editedTitle.language !== undefined)
-                entry.language = editedTitle.language;
             }
           }
 
