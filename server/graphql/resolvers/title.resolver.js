@@ -1,13 +1,15 @@
 import Title from "../../models/title.model.js";
 import Author from "../../models/author.model.js";
 import Label from "../../models/label.model.js";
-import TitleRating from "../../models/titleRating.model.js";
+import User from "../../models/user.model.js";
 import { getChapterCount } from "../../lib/s3.js";
+import { getRecommendations } from "../../utils/recommend.js";
+
 import mongoose from "mongoose";
 
 export const titleResolvers = {
   Query: {
-    async titles(_, { filter, sort, limit = 10, offset = 0, userId }) {
+    async titles(_, { filter, sort, limit = 100, offset = 0, userId }) {
       try {
         const match = {};
 
@@ -51,7 +53,6 @@ export const titleResolvers = {
           },
         ];
 
-        // ⬇️ JOIN з users.lists.titles
         if (userId && filter?.list?.length) {
           pipeline.push(
             {
@@ -127,6 +128,52 @@ export const titleResolvers = {
         console.error("error fetching titles:", error.message, error.stack);
         throw new Error("Failed to fetch titles");
       }
+    },
+
+    popularTitles: async (_, { limit = 10 }) => {
+      const pipeline = [
+        { $unwind: "$lists" },
+        { $unwind: "$lists.titles" },
+        {
+          $group: {
+            _id: "$lists.titles.title",
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: "titles",
+            localField: "_id",
+            foreignField: "_id",
+            as: "title",
+          },
+        },
+        { $unwind: "$title" },
+        {
+          $project: {
+            id: "$title._id",
+            name: "$title.name",
+            cover: "$title.cover",
+            translation: "$title.translation",
+            type: "$title.type",
+            franchise: "$title.franchise",
+            status: "$title.status",
+            alt_names: "$title.alt_names",
+            genres: "$title.genres",
+            tags: "$title.tags",
+            count: 1,
+          },
+        },
+      ];
+
+      return await User.aggregate(pipeline);
+    },
+
+    recommendedTitles: async (_, { userId }) => {
+      const ids = await getRecommendations(userId);
+      return await Title.find({ _id: { $in: ids } });
     },
 
     async getTitle(_, { id }) {

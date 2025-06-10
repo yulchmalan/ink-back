@@ -113,7 +113,8 @@ export const titleTypeDefs = `#graphql
 
   type Query {
     titles(filter: TitleFilterInput, sort: TitleSortInput, limit: Int, offset: Int, userId: ObjectID, list: String): TitleQueryResult!
-    
+    popularTitles(limit: Int = 15): [Title!]!
+    recommendedTitles(userId: ObjectID!): [Title!]!
     getTitle(id: ObjectID!): Title
   }
 

@@ -126,6 +126,27 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const DEFAULT_LISTS = [
+  "reading",
+  "planned",
+  "completed",
+  "dropped",
+  "favorite",
+];
+
+userSchema.pre("save", function (next) {
+  if (!this.lists || !this.lists.length) {
+    this.lists = DEFAULT_LISTS.map((name) => ({ name, titles: [] }));
+  } else {
+    const existingNames = this.lists.map((l) => l.name);
+    const missing = DEFAULT_LISTS.filter(
+      (name) => !existingNames.includes(name)
+    );
+    this.lists.push(...missing.map((name) => ({ name, titles: [] })));
+  }
+  next();
+});
+
 const User = mongoose.model("User", userSchema);
 
 export default User;
