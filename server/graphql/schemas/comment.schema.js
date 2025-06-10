@@ -12,7 +12,7 @@ export const commentTypeDefs = `#graphql
     subject_ID: ObjectID!
     title: Title
     body: String!
-    parent: Comment
+    parent_ID: ObjectID
     score: Score
     createdAt: DateTime
     updatedAt: DateTime
@@ -44,6 +44,7 @@ export const commentTypeDefs = `#graphql
   input CommentFilter {
     subjectId: ObjectID
     userId: ObjectID
+    parentId: ObjectID
   }
 
   type PaginatedComments {

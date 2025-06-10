@@ -3,6 +3,16 @@ import User from "../../models/user.model.js";
 import Title from "../../models/title.model.js";
 import { isValidObjectId, Types } from "mongoose";
 
+async function deleteCommentWithReplies(commentId) {
+  const replies = await Comment.find({ parent_ID: commentId });
+
+  for (const reply of replies) {
+    await deleteCommentWithReplies(reply._id);
+  }
+
+  await Comment.findByIdAndDelete(commentId);
+}
+
 export const commentResolvers = {
   Query: {
     async comments(
@@ -26,6 +36,17 @@ export const commentResolvers = {
           query.subject_ID = Types.ObjectId.createFromHexString(
             filter.subjectId
           );
+        }
+
+        if (filter.parentId !== undefined) {
+          if (filter.parentId === null) {
+            query.parent_ID = null;
+          } else if (isValidObjectId(filter.parentId)) {
+            query.parent_ID = new Types.ObjectId(String(filter.parentId));
+          } else {
+            console.error("Invalid parentId:", filter.parentId);
+            throw new Error("Invalid parentId");
+          }
         }
 
         const sortDirection = sortOrder === "ASC" ? 1 : -1;
@@ -128,10 +149,10 @@ export const commentResolvers = {
 
     async deleteComment(_, { id }) {
       try {
-        const deleted = await Comment.findByIdAndDelete(id);
-        return !!deleted;
+        await deleteCommentWithReplies(id);
+        return true;
       } catch (error) {
-        console.error("error deleting comment:", error.message);
+        console.error("error deleting comment and replies:", error.message);
         throw new Error("Failed to delete comment");
       }
     },
@@ -216,9 +237,11 @@ export const commentResolvers = {
     async user(parent) {
       return await User.findById(parent.user_ID);
     },
-    async parent(parent) {
-      return parent.parent_ID ? await Comment.findById(parent.parent_ID) : null;
+
+    parent_ID(parent) {
+      return parent.parent_ID || null;
     },
+
     async title(parent) {
       return await Title.findById(parent.subject_ID);
     },
