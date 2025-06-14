@@ -1,6 +1,8 @@
 import Collection from "../../models/collection.model.js";
 import User from "../../models/user.model.js";
 import Title from "../../models/title.model.js";
+import mongoose from "mongoose";
+const { Types } = mongoose;
 
 export const collectionResolvers = {
   Query: {
@@ -12,11 +14,18 @@ export const collectionResolvers = {
         sortOrder = "DESC",
         limit = 10,
         offset = 0,
+        search,
       }
     ) {
       const query = {};
+      if (search) {
+        query.name = { $regex: search, $options: "i" };
+      }
       if (filter.userId) {
         query.user_ID = filter.userId;
+      }
+      if (filter.name) {
+        query.name = { $regex: filter.name, $options: "i" };
       }
 
       const sortDirection = sortOrder === "ASC" ? 1 : -1;
@@ -54,6 +63,9 @@ export const collectionResolvers = {
 
       return { total, results };
     },
+    collection: async (_, { id }) => {
+      return await Collection.findById(id);
+    },
   },
 
   Mutation: {
@@ -80,25 +92,111 @@ export const collectionResolvers = {
       return updated;
     },
 
+    async removeTitleFromCollection(_, { collectionId, titleId }) {
+      const updated = await Collection.findByIdAndUpdate(
+        collectionId,
+        { $pull: { titles: titleId } },
+        { new: true }
+      );
+      return updated;
+    },
+
     async deleteCollection(_, { id }) {
       const deleted = await Collection.findByIdAndDelete(id);
       return !!deleted;
     },
 
-    async likeCollection(_, { id }) {
-      return await Collection.findByIdAndUpdate(
-        id,
-        { $inc: { "score.likes": 1 } },
+    async addTitleToCollection(_, { collectionId, titleId }) {
+      const updated = await Collection.findByIdAndUpdate(
+        collectionId,
+        { $addToSet: { titles: titleId } },
         { new: true }
       );
+      return updated;
     },
 
-    async dislikeCollection(_, { id }) {
-      return await Collection.findByIdAndUpdate(
-        id,
-        { $inc: { "score.dislikes": 1 } },
-        { new: true }
+    async likeCollection(_, { id, userId }) {
+      userId = new Types.ObjectId(userId);
+      const collection = await Collection.findById(id);
+      if (!collection) throw new Error("Collection not found");
+
+      const liked = collection.score.likedBy?.some((uid) => uid.equals(userId));
+      const disliked = collection.score.dislikedBy?.some((uid) =>
+        uid.equals(userId)
       );
+
+      if (liked) {
+        collection.score.likes--;
+        collection.score.likedBy.pull(userId);
+      } else {
+        collection.score.likes++;
+        collection.score.likedBy.push(userId);
+        if (disliked) {
+          collection.score.dislikes--;
+          collection.score.dislikedBy.pull(userId);
+        }
+      }
+
+      await collection.save();
+      return collection;
+    },
+
+    async dislikeCollection(_, { id, userId }) {
+      userId = new Types.ObjectId(userId);
+      const collection = await Collection.findById(id);
+      if (!collection) throw new Error("Collection not found");
+
+      const liked = collection.score.likedBy?.some((uid) => uid.equals(userId));
+      const disliked = collection.score.dislikedBy?.some((uid) =>
+        uid.equals(userId)
+      );
+
+      if (disliked) {
+        collection.score.dislikes--;
+        collection.score.dislikedBy.pull(userId);
+      } else {
+        collection.score.dislikes++;
+        collection.score.dislikedBy.push(userId);
+        if (liked) {
+          collection.score.likes--;
+          collection.score.likedBy.pull(userId);
+        }
+      }
+
+      await collection.save();
+      return collection;
+    },
+
+    async clearCollectionVote(_, { id, userId }) {
+      userId = new Types.ObjectId(userId);
+      const collection = await Collection.findById(id);
+      if (!collection) throw new Error("Collection not found");
+
+      const liked = collection.score.likedBy?.some((uid) => uid.equals(userId));
+      const disliked = collection.score.dislikedBy?.some((uid) =>
+        uid.equals(userId)
+      );
+
+      if (liked) {
+        collection.score.likes--;
+        collection.score.likedBy.pull(userId);
+      }
+      if (disliked) {
+        collection.score.dislikes--;
+        collection.score.dislikedBy.pull(userId);
+      }
+
+      await collection.save();
+      return collection;
+    },
+
+    async incrementCollectionViews(_, { id }) {
+      const collection = await Collection.findById(id);
+      if (!collection) throw new Error("Collection not found");
+
+      collection.views = (collection.views ?? 0) + 1;
+      await collection.save();
+      return collection;
     },
   },
 

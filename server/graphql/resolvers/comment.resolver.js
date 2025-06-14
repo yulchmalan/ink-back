@@ -114,11 +114,12 @@ export const commentResolvers = {
   Mutation: {
     async createComment(_, { input }) {
       try {
-        const { userId, subjectId, body, parentId } = input;
+        const { userId, subjectId, subjectType, body, parentId } = input;
 
         const newComment = await Comment.create({
           user_ID: userId,
           subject_ID: subjectId,
+          subjectType,
           body,
           parent_ID: parentId || null,
           score: { likes: 0, dislikes: 0 },
@@ -244,6 +245,10 @@ export const commentResolvers = {
 
     async title(parent) {
       return await Title.findById(parent.subject_ID);
+    },
+
+    subjectType(parent) {
+      return parent.subjectType;
     },
   },
 };

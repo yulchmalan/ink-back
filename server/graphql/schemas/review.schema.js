@@ -2,6 +2,8 @@ export const reviewTypeDefs = `#graphql
   type Score {
     likes: Int
     dislikes: Int
+    likedBy: [User!]!
+    dislikedBy: [User!]!
   }
 
   type Review {
@@ -62,6 +64,7 @@ export const reviewTypeDefs = `#graphql
       sortOrder: SortOrder = DESC
       limit: Int = 10
       offset: Int = 0
+      search: String
     ): PaginatedReviews!
 
     review(id: ObjectID!): Review
@@ -71,7 +74,9 @@ export const reviewTypeDefs = `#graphql
     createReview(input: CreateReviewInput!): Review
     deleteReview(id: ObjectID!): Boolean
     editReview(id: ObjectID!, edits: EditReviewInput!): Review
-    likeReview(id: ObjectID!): Review
-    dislikeReview(id: ObjectID!): Review
+    likeReview(id: ObjectID!, userId: ObjectID!): Review
+    dislikeReview(id: ObjectID!, userId: ObjectID!): Review
+    clearReviewVote(id: ObjectID!, userId: ObjectID!): Review
+    incrementReviewViews(id: ObjectID!): Review
   }
 `;

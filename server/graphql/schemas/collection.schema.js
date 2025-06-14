@@ -2,6 +2,8 @@ export const collectionTypeDefs = `#graphql
     type Score {
         likes: Int
         dislikes: Int
+        likedBy: [User!]!
+        dislikedBy: [User!]!
     }
 
     type Collection {
@@ -37,6 +39,7 @@ export const collectionTypeDefs = `#graphql
 
     input CollectionFilter {
         userId: ObjectID
+        name: String
     }
 
     type PaginatedCollections {
@@ -51,6 +54,7 @@ export const collectionTypeDefs = `#graphql
             sortOrder: SortOrder = DESC
             limit: Int = 10
             offset: Int = 0
+            search: String
         ): PaginatedCollections!
         collection(id: ObjectID!): Collection
     }
@@ -60,7 +64,11 @@ export const collectionTypeDefs = `#graphql
         createCollection(input: CreateCollectionInput!): Collection
         editCollection(id: ObjectID!, edits: EditCollectionInput!): Collection
         deleteCollection(id: ObjectID!): Boolean
-        likeCollection(id: ObjectID!): Collection
-        dislikeCollection(id: ObjectID!): Collection
+        likeCollection(id: ObjectID!, userId: ObjectID!): Collection!
+        dislikeCollection(id: ObjectID!, userId: ObjectID!): Collection!
+        clearCollectionVote(id: ObjectID!, userId: ObjectID!): Collection!
+        incrementCollectionViews(id: ObjectID!): Collection!
+        addTitleToCollection(collectionId: ObjectID!, titleId: ObjectID!): Collection
+        removeTitleFromCollection(collectionId: ObjectID!, titleId: ObjectID!): Collection
     }
 `;

@@ -28,6 +28,11 @@ const commentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       required: true,
     },
+    subjectType: {
+      type: String,
+      enum: ["TITLE", "REVIEW", "COLLECTION"],
+      required: true,
+    },
     body: {
       type: String,
       required: true,

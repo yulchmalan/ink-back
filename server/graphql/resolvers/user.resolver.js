@@ -247,7 +247,6 @@ export const userResolvers = {
       user.markModified("lists");
       await user.save();
 
-      // ⬇️ Додано: оновлення середнього рейтингу
       const allUsers = await User.find({ "lists.titles.title": titleId });
 
       let sum = 0;

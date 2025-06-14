@@ -6,6 +6,13 @@ export const commentTypeDefs = `#graphql
     dislikedBy: [User!]!
   }
 
+  enum SubjectType {
+    TITLE
+    REVIEW
+    COLLECTION
+  }
+
+
   type Comment {
     id: ObjectID!
     user: User!
@@ -15,12 +22,14 @@ export const commentTypeDefs = `#graphql
     parent_ID: ObjectID
     score: Score
     createdAt: DateTime
+    subjectType: SubjectType!
     updatedAt: DateTime
   }
 
   input CreateCommentInput {
     userId: ObjectID!
     subjectId: ObjectID!
+    subjectType: SubjectType!
     body: String!
     parentId: ObjectID
   }

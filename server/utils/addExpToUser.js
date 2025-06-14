@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { connectDB } from "../config/db.js";
-import User from "../models/user.model.js";
+import Comment from "../models/comment.model.js";
 
 dotenv.config();
 
@@ -8,22 +8,24 @@ const run = async () => {
   try {
     await connectDB();
 
-    const users = await User.find({ exp: { $exists: false } });
+    const comments = await Comment.find({ subjectType: { $exists: false } });
 
-    if (users.length === 0) {
-      console.log("У всіх користувачів вже є поле exp");
+    if (comments.length === 0) {
+      console.log("У всіх коментарів вже є поле subjectType");
       return process.exit(0);
     }
 
-    for (const user of users) {
-      await User.findByIdAndUpdate(user._id, { $set: { exp: 0 } });
-      console.log(`Додано exp для користувача ${user.username}`);
+    for (const comment of comments) {
+      await Comment.findByIdAndUpdate(comment._id, {
+        $set: { subjectType: "TITLE" },
+      });
+      console.log(`Оновлено comment ${comment._id}`);
     }
 
-    console.log("Завершено додавання поля exp.");
+    console.log("Завершено додавання поля subjectType.");
     process.exit(0);
   } catch (err) {
-    console.error("Помилка при оновленні користувачів:", err.message);
+    console.error("Помилка при оновленні коментарів:", err.message);
     process.exit(1);
   }
 };

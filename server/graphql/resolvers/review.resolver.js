@@ -2,6 +2,8 @@ import Review from "../../models/review.model.js";
 import User from "../../models/user.model.js";
 import Title from "../../models/title.model.js";
 import Comment from "../../models/comment.model.js";
+import mongoose from "mongoose";
+const { Types } = mongoose;
 
 export const reviewResolvers = {
   Query: {
@@ -13,11 +15,14 @@ export const reviewResolvers = {
         sortOrder = "DESC",
         limit = 10,
         offset = 0,
+        search,
       }
     ) {
       try {
         const query = {};
-
+        if (search) {
+          query.name = { $regex: search, $options: "i" };
+        }
         if (filter.userId) query.user_ID = filter.userId;
         if (filter.titleId) query.title_ID = filter.titleId;
         if (filter.minRating !== undefined)
@@ -105,30 +110,87 @@ export const reviewResolvers = {
       }
     },
 
-    async likeReview(_, { id }) {
-      try {
-        return await Review.findByIdAndUpdate(
-          id,
-          { $inc: { "score.likes": 1 } },
-          { new: true }
-        );
-      } catch (error) {
-        console.error("error liking review:", error.message);
-        throw new Error("Failed to like review");
+    async likeReview(_, { id, userId }) {
+      userId = new Types.ObjectId(userId);
+      const review = await Review.findById(id);
+      if (!review) throw new Error("Review not found");
+
+      const liked = review.score.likedBy?.some((uid) => uid.equals(userId));
+      const disliked = review.score.dislikedBy?.some((uid) =>
+        uid.equals(userId)
+      );
+
+      if (liked) {
+        review.score.likes--;
+        review.score.likedBy.pull(userId);
+      } else {
+        review.score.likes++;
+        review.score.likedBy.push(userId);
+        if (disliked) {
+          review.score.dislikes--;
+          review.score.dislikedBy.pull(userId);
+        }
       }
+
+      await review.save();
+      return review;
     },
 
-    async dislikeReview(_, { id }) {
-      try {
-        return await Review.findByIdAndUpdate(
-          id,
-          { $inc: { "score.dislikes": 1 } },
-          { new: true }
-        );
-      } catch (error) {
-        console.error("error disliking review:", error.message);
-        throw new Error("Failed to dislike review");
+    async dislikeReview(_, { id, userId }) {
+      userId = new Types.ObjectId(userId);
+      const review = await Review.findById(id);
+      if (!review) throw new Error("Review not found");
+
+      const liked = review.score.likedBy?.some((uid) => uid.equals(userId));
+      const disliked = review.score.dislikedBy?.some((uid) =>
+        uid.equals(userId)
+      );
+
+      if (disliked) {
+        review.score.dislikes--;
+        review.score.dislikedBy.pull(userId);
+      } else {
+        review.score.dislikes++;
+        review.score.dislikedBy.push(userId);
+        if (liked) {
+          review.score.likes--;
+          review.score.likedBy.pull(userId);
+        }
       }
+
+      await review.save();
+      return review;
+    },
+
+    async clearReviewVote(_, { id, userId }) {
+      userId = new Types.ObjectId(userId);
+      const review = await Review.findById(id);
+      if (!review) throw new Error("Review not found");
+
+      const liked = review.score.likedBy?.some((uid) => uid.equals(userId));
+      const disliked = review.score.dislikedBy?.some((uid) =>
+        uid.equals(userId)
+      );
+
+      if (liked) {
+        review.score.likes--;
+        review.score.likedBy.pull(userId);
+      }
+      if (disliked) {
+        review.score.dislikes--;
+        review.score.dislikedBy.pull(userId);
+      }
+
+      await review.save();
+      return review;
+    },
+    async incrementReviewViews(_, { id }) {
+      const review = await Review.findById(id);
+      if (!review) throw new Error("Review not found");
+
+      review.views = (review.views ?? 0) + 1;
+      await review.save();
+      return review;
     },
   },
 
