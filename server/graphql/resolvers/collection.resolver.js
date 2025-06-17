@@ -22,10 +22,13 @@ export const collectionResolvers = {
         query.name = { $regex: search, $options: "i" };
       }
       if (filter.userId) {
-        query.user_ID = filter.userId;
+        query.user_ID = new Types.ObjectId(filter.userId);
       }
       if (filter.name) {
         query.name = { $regex: filter.name, $options: "i" };
+      }
+      if (filter.titleId) {
+        query.titles = { $in: [new Types.ObjectId(filter.titleId)] };
       }
 
       const sortDirection = sortOrder === "ASC" ? 1 : -1;
@@ -43,6 +46,18 @@ export const collectionResolvers = {
           { $sort: { rating: sortDirection } },
           { $skip: offset },
           { $limit: limit },
+          {
+            $project: {
+              id: "$_id",
+              _id: 1,
+              name: 1,
+              description: 1,
+              views: 1,
+              createdAt: 1,
+              score: 1,
+              titles: 1,
+            },
+          },
         ]);
 
         return { total, results };

@@ -2,6 +2,7 @@ import Comment from "../../models/comment.model.js";
 import User from "../../models/user.model.js";
 import Title from "../../models/title.model.js";
 import { isValidObjectId, Types } from "mongoose";
+import Notification from "../../models/notification.model.js";
 
 async function deleteCommentWithReplies(commentId) {
   const replies = await Comment.find({ parent_ID: commentId });
@@ -73,6 +74,7 @@ export const commentResolvers = {
                 score: 1,
                 subject_ID: 1,
                 user_ID: 1,
+                subjectType: 1,
               },
             },
           ]);
@@ -128,6 +130,24 @@ export const commentResolvers = {
         await User.findByIdAndUpdate(userId, {
           $push: { comments: newComment._id },
         });
+
+        if (parentId && isValidObjectId(parentId)) {
+          const parentComment = await Comment.findById(parentId);
+
+          if (parentComment && parentComment.user_ID.toString() !== userId) {
+            try {
+              await Notification.create({
+                recipient: parentComment.user_ID,
+                sender: userId,
+                subjectId: parentComment._id,
+                subjectType: parentComment.subjectType,
+                type: "REPLY",
+              });
+            } catch (err) {
+              console.error("Failed to create notification:", err);
+            }
+          }
+        }
 
         return newComment;
       } catch (error) {

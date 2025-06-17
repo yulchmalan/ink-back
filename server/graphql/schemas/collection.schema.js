@@ -40,6 +40,7 @@ export const collectionTypeDefs = `#graphql
     input CollectionFilter {
         userId: ObjectID
         name: String
+        titleId: ObjectID
     }
 
     type PaginatedCollections {

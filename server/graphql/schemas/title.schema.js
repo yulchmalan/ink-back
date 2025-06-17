@@ -21,6 +21,7 @@ export const titleTypeDefs = `#graphql
   enum TitleSortField {
     NAME
     CREATED_AT
+    RATING
   }
 
   enum SortDirection {

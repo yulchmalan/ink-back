@@ -138,5 +138,7 @@ export const userTypeDefs = `#graphql
     addFriend(userId: ObjectID!, friendId: ObjectID!, status: FriendStatus!): User
     updateFriendStatus(userId: ObjectID!, friendId: ObjectID!, newStatus: FriendStatus!): User
     removeFriend(userId: ObjectID!, friendId: ObjectID!): User
+
+    resetTitleProgress(userId: ObjectID!, titleId: ObjectID!): Boolean
   }
 `;

@@ -23,7 +23,9 @@ export const reviewResolvers = {
         if (search) {
           query.name = { $regex: search, $options: "i" };
         }
-        if (filter.userId) query.user_ID = filter.userId;
+        if (filter.userId && Types.ObjectId.isValid(filter.userId)) {
+          query.user_ID = new Types.ObjectId(filter.userId);
+        }
         if (filter.titleId) query.title_ID = filter.titleId;
         if (filter.minRating !== undefined)
           query.rating = { ...query.rating, $gte: filter.minRating };
@@ -38,6 +40,37 @@ export const reviewResolvers = {
 
         const sortField = sortFields[sortBy] || "createdAt";
         const direction = sortOrder === "ASC" ? 1 : -1;
+
+        if (sortBy === "RATING") {
+          const total = await Review.countDocuments(query);
+
+          const results = await Review.aggregate([
+            { $match: query },
+            {
+              $addFields: {
+                ratingScore: { $subtract: ["$score.likes", "$score.dislikes"] },
+              },
+            },
+            { $sort: { ratingScore: direction } },
+            { $skip: offset },
+            { $limit: limit },
+            {
+              $project: {
+                id: "$_id",
+                _id: 1,
+                name: 1,
+                body: 1,
+                views: 1,
+                rating: 1,
+                title_ID: 1,
+                score: 1,
+                user_ID: 1,
+              },
+            },
+          ]);
+
+          return { total, results };
+        }
 
         const total = await Review.countDocuments(query);
         const results = await Review.find(query)

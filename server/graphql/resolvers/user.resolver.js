@@ -2,6 +2,7 @@ import User from "../../models/user.model.js";
 import Review from "../../models/review.model.js";
 import Comment from "../../models/comment.model.js";
 import Title from "../../models/title.model.js";
+import Notification from "../../models/notification.model.js";
 import TitleRating from "../../models/titleRating.model.js";
 
 const DEFAULT_LISTS = [
@@ -133,7 +134,7 @@ export const userResolvers = {
 
           user.markModified("lists");
         }
-
+        user.updatedAt = new Date();
         await user.save();
         return user;
       } catch (error) {
@@ -314,6 +315,12 @@ export const userResolvers = {
       await user.save();
       await friend.save();
 
+      await Notification.create({
+        recipient: friendId,
+        sender: userId,
+        type: "FRIEND_REQUEST",
+      });
+
       return user;
     },
 
@@ -337,6 +344,14 @@ export const userResolvers = {
       await user.save();
       await friend.save();
 
+      if (newStatus === "ACCEPTED") {
+        await Notification.create({
+          recipient: friendId,
+          sender: userId,
+          type: "FRIEND_ACCEPTED",
+        });
+      }
+
       return user;
     },
 
@@ -354,6 +369,29 @@ export const userResolvers = {
       await friend.save();
 
       return user;
+    },
+
+    resetTitleProgress: async (_, { userId, titleId }) => {
+      const user = await User.findById(userId);
+      if (!user) throw new Error("User not found");
+
+      let changed = false;
+
+      for (const list of user.lists) {
+        for (const entry of list.titles) {
+          if (entry.title.toString() === titleId) {
+            entry.last_open = null;
+            changed = true;
+          }
+        }
+      }
+
+      if (changed) {
+        user.markModified("lists");
+        await user.save();
+      }
+
+      return changed;
     },
   },
 

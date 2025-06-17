@@ -26,6 +26,8 @@ import { authTypeDefs } from "./schemas/auth.schema.js";
 import { authResolvers } from "./resolvers/auth.resolver.js";
 import uploadResolver from "./resolvers/upload.resolver.js";
 import { uploadTypeDefs } from "./schemas/upload.schema.js";
+import { notificationTypeDefs } from "./schemas/notification.schema.js";
+import { notificationResolvers } from "./resolvers/notification.resolver.js";
 
 const typeDefs = mergeTypeDefs([
   ...scalarTypeDefs,
@@ -40,6 +42,7 @@ const typeDefs = mergeTypeDefs([
   authTypeDefs,
   uploadTypeDefs,
   collectionTypeDefs,
+  notificationTypeDefs,
 ]);
 
 const resolvers = mergeResolvers([
@@ -55,6 +58,7 @@ const resolvers = mergeResolvers([
   authResolvers,
   uploadResolver,
   collectionResolvers,
+  notificationResolvers,
 ]);
 
 export { typeDefs, resolvers };

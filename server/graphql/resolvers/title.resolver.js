@@ -3,10 +3,68 @@ import Author from "../../models/author.model.js";
 import Label from "../../models/label.model.js";
 import User from "../../models/user.model.js";
 import { getChapterCount } from "../../lib/s3.js";
-import { getRecommendations } from "../../utils/recommend.js";
 
 import mongoose from "mongoose";
 
+export const getRecommendations = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user || !user.lists) return [];
+
+  const savedTitleIds = new Set();
+  for (const list of user.lists) {
+    for (const entry of list.titles) {
+      savedTitleIds.add(entry.title.toString());
+    }
+  }
+
+  const savedTitles = await Title.find({ _id: { $in: [...savedTitleIds] } });
+
+  const genreCounts = {};
+  for (const title of savedTitles) {
+    for (const genre of title.genres) {
+      const id = genre.toString();
+      genreCounts[id] = (genreCounts[id] || 0) + 1;
+    }
+  }
+
+  const topGenres = Object.entries(genreCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([id]) => id);
+
+  if (!topGenres.length) return [];
+
+  const baseRecommendations = await Title.find({
+    genres: { $in: topGenres },
+    _id: { $nin: [...savedTitleIds] },
+  })
+    .limit(30) // більше, щоб був запас
+    .select("_id");
+
+  const uniqueIds = [];
+  const used = new Set();
+
+  for (const t of baseRecommendations) {
+    if (!used.has(t._id.toString()) && uniqueIds.length < 15) {
+      used.add(t._id.toString());
+      uniqueIds.push(t._id);
+    }
+  }
+
+  if (uniqueIds.length < 15) {
+    const fill = await Title.find({
+      _id: {
+        $nin: [...savedTitleIds, ...uniqueIds.map((id) => id.toString())],
+      },
+    })
+      .limit(15 - uniqueIds.length)
+      .select("_id");
+
+    uniqueIds.push(...fill.map((t) => t._id));
+  }
+
+  return uniqueIds;
+};
 export const titleResolvers = {
   Query: {
     async titles(_, { filter, sort, limit = 100, offset = 0, userId }) {
