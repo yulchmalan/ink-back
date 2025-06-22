@@ -260,7 +260,7 @@ export const userResolvers = {
               t.title.toString() === titleId &&
               typeof t.rating === "number"
             ) {
-              sum += t.rating;
+              sum += t.rating * 2;
               count++;
             }
           });

@@ -103,12 +103,8 @@ export const titleResolvers = {
               as: "rating",
             },
           },
-          {
-            $addFields: {
-              rating: { $first: "$rating" },
-              id: "$_id",
-            },
-          },
+          { $unwind: { path: "$rating", preserveNullAndEmptyArrays: true } },
+          { $addFields: { id: "$_id" } },
         ];
 
         if (userId && filter?.list?.length) {

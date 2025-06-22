@@ -13,7 +13,7 @@ export const reviewResolvers = {
         filter = {},
         sortBy = "CREATED_AT",
         sortOrder = "DESC",
-        limit = 10,
+        limit = 100,
         offset = 0,
         search,
       }
